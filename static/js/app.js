@@ -1,45 +1,104 @@
 function buildMetadata(sample) {
 
-  // @TODO: Complete the following function that builds the metadata panel
+  // use d3 to select the panel with id of `#sample-metadata`
+  var panel = d3.select('#sample-metadata');
 
-  // Use `d3.json` to fetch the metadata for a sample
-    // Use d3 to select the panel with id of `#sample-metadata`
+  // use `.html('')` to clear any existing metadata
+  panel.html('');
 
-    // Use `.html("") to clear any existing metadata
+  // use `Object.entries` to add each key and value pair to the panel
+  d3.json(`/metadata/${sample}`).then((sampleMetadata) => {
+    Object.entries(sampleMetadata).forEach(([key, value]) =>
+      panel
+        .append('p')
+        .html(`${key}: ${value}`)
+    );
 
-    // Use `Object.entries` to add each key and value pair to the panel
-    // Hint: Inside the loop, you will need to use d3 to append new
-    // tags for each key-value in the metadata.
+    // build the gauge chart
+    var data = [{
+      domain: {
+        x: [0, 1],
+        y: [0, 1]
+      },
+      value: sampleMetadata.WFREQ,
+      type: 'indicator',
+      mode: 'gauge+number',
+      gauge: {
+        axis: {range: [null, 9]},
+        steps: [
+          { range: [0, 1], color: 'rgb(248, 243, 236)' },
+          { range: [1, 2], color: 'rgb(244, 241, 229)' },
+          { range: [2, 3], color: 'rgb(233, 230, 202}' },
+          { range: [3, 4], color: 'rgb(229, 231, 179)' },
+          { range: [4, 5], color: 'rgb(213, 228, 157)' },
+          { range: [5, 6], color: 'rgb(183, 204, 146)' },
+          { range: [6, 7], color: 'rgb(140, 191, 136)' },
+          { range: [7, 8], color: 'rgb(138, 187, 143)' },
+          { range: [8, 9], color: 'rgb(133, 180, 138)' }
+        ]
+      }
+    }];
+    var layout = {
+      title: '<b>Belly Button Washing Frequency</b><br>' +
+            'Scrubs per Week'
+    };
+    Plotly.newPlot("gauge", data, layout)
+  });
 
-    // BONUS: Build the Gauge Chart
-    // buildGauge(data.WFREQ);
 }
 
 function buildCharts(sample) {
 
-  // @TODO: Use `d3.json` to fetch the sample data for the plots
+  // use `d3.json` to fetch the sample data for the plots
+  d3.json(`/samples/${sample}`).then((sample) => {
 
-    // @TODO: Build a Bubble Chart using the sample data
+    // build a pie chart using the sample data
+    var data = [{
+      values: sample.sample_values.slice(0, 10),
+      labels: sample.otu_ids.slice(0, 10),
+      type: 'pie',
+      hovertext: sample.otu_labels.slice(0, 10),
+      hovertemplate:
+        'OTU ID: %{label}<br>' +
+        'OTU Label: %{text}<br>' +
+        'Sample Value: %{value}'
+    }];
+    Plotly.newPlot('pie', data);
 
-    // @TODO: Build a Pie Chart
-    // HINT: You will need to use slice() to grab the top 10 sample_values,
-    // otu_ids, and labels (10 each).
+    // build a bubble chart using the sample data
+    var data =[{
+      x: sample.otu_ids,
+      y: sample.sample_values,
+      mode: 'markers',
+      marker: {
+        size: sample.sample_values,
+        color: sample.otu_ids,
+        colorscale: 'Earth'
+      },
+      text: sample.otu_labels,
+      hovertemplate:
+        '(%{x}, %{y})<br>' +
+        '%{text}'
+    }];
+    Plotly.newPlot('bubble', data);
+  });
+
 }
 
 function init() {
-  // Grab a reference to the dropdown select element
-  var selector = d3.select("#selDataset");
+  // grab a reference to the dropdown select element
+  var selector = d3.select('#selDataset');
 
-  // Use the list of sample names to populate the select options
-  d3.json("/names").then((sampleNames) => {
+  // use the list of sample names to populate the select options
+  d3.json('/names').then((sampleNames) => {
     sampleNames.forEach((sample) => {
       selector
-        .append("option")
+        .append('option')
         .text(sample)
-        .property("value", sample);
+        .property('value', sample);
     });
 
-    // Use the first sample from the list to build the initial plots
+    // use the first sample from the list to build the initial plots
     const firstSample = sampleNames[0];
     buildCharts(firstSample);
     buildMetadata(firstSample);
@@ -47,10 +106,10 @@ function init() {
 }
 
 function optionChanged(newSample) {
-  // Fetch new data each time a new sample is selected
+  // fetch new data each time a new sample is selected
   buildCharts(newSample);
   buildMetadata(newSample);
 }
 
-// Initialize the dashboard
+// initialize the dashboard
 init();

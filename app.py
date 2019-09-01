@@ -13,6 +13,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
+# to avoid browser to cache static assets served by Flask
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 #################################################
 # Database Setup
@@ -103,4 +105,4 @@ def samples(sample):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
